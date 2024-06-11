@@ -1,1 +1,1 @@
-Projeto de Vendas desenvolvido integrando o JPA na aplicação, que inicialmente utilizava JDBC.
+Projeto feito e executado no STS(Spring Tool Suite 4)
