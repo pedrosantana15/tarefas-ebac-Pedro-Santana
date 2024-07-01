@@ -3,6 +3,7 @@ package br.com.spedro.vendas.online.usecase;
 import br.com.spedro.vendas.online.domain.Produto;
 import br.com.spedro.vendas.online.exception.EntityNotFoundException;
 import br.com.spedro.vendas.online.repository.IProdutoRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +17,20 @@ public class CadastroProduto {
         this.produtoRepository = produtoRepository;
     }
 
-    public Produto cadastrar(Produto produto) {
-        return produtoRepository.insert(produto);
+    public Produto cadastrar(@Valid Produto produto) {
+        produto.setStatus(Produto.Status.ATIVO);
+        return this.produtoRepository.insert(produto);
     }
 
-    public Produto atualizar(Produto produto) {
-        return produtoRepository.save(produto);
+    public Produto atualizar(@Valid Produto produto) {
+        return this.produtoRepository.save(produto);
     }
 
     public void remover(String id) {
-        Produto p = produtoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Produto.class, id));
-        p.setStatus(Produto.Status.INATIVO);
-        produtoRepository.save(p);
+        Produto prod = produtoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(Produto.class, "id", id));
+        prod.setStatus(Produto.Status.INATIVO);
+        this.produtoRepository.save(prod);
     }
 
 }

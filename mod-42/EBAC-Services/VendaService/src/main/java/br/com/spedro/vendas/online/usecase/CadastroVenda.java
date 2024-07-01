@@ -9,7 +9,6 @@ import br.com.spedro.vendas.online.service.ClienteService;
 import br.com.spedro.vendas.online.service.IProdutoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -36,7 +35,7 @@ public class CadastroVenda {
     public Venda cadastrar(@Valid VendaDTO vendaDTO) {
         Venda venda = convertToDomain(vendaDTO, Venda.Status.INICIADA);
         validarCliente(venda.getClienteId());
-        venda.recalcularValorTotal();
+        venda.recalcularValorTotalVenda();
         return this.vendaRepository.insert(venda);
     }
 

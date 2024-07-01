@@ -2,12 +2,15 @@ package br.com.spedro.vendas.online.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -15,17 +18,16 @@ import java.util.Set;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
 @Schema(name = "Venda", description = "Venda")
 public class Venda {
 
-    public enum Status{
+    public enum Status {
         INICIADA, CONCLUIDA, CANCELADA;
 
-        public Status getByName(String value){
-            for(Status status : Status.values()){
-                if(status.name().equals(value)){
+        public static Status getByName(String value) {
+            for (Status status : Status.values()) {
+                if (status.name().equals(value)) {
                     return status;
                 }
             }
@@ -38,18 +40,18 @@ public class Venda {
     private String id;
 
     @NotNull
-    @Schema(description = "Código da venda")
+    @Size(min = 2, max = 10)
+    @Indexed(unique = true, background = true)
+    @Schema(description = "Código", minLength = 2, maxLength = 10)
     private String codigo;
 
     @NotNull
-    @Schema(description = "Cliente")
+    @Schema(description = "Identificador do Cliente")
     private String clienteId;
 
-    @NotNull
-    @Schema(description = "Produtos")
+    @Schema(description = "Lista de produtos")
     private Set<ProdutoQuantidade> produtos;
 
-    @NotNull
     @Schema(description = "Valor total")
     private BigDecimal valorTotal;
 
@@ -58,37 +60,38 @@ public class Venda {
     private Instant dataVenda;
 
     @NotNull
-    @Schema(description = "Status")
+    @Schema(description = "Status da venda")
     private Status status;
 
-    public void validarStatus(){
-        if(this.status == Status.CONCLUIDA || this.status == Status.CANCELADA){
-            throw new UnsupportedOperationException("NÃO É POSSÍVEL ALTERAR UMA VENDA FINALIZADA/CANCELADA");
-        }
+    public Venda() {
+        produtos = new HashSet<>();
     }
 
-    public void adicionarProduto(Produto produto, Integer quantidade){
+
+    public void adicionarProduto(Produto produto, Integer quantidade) {
         validarStatus();
-
-        Optional<ProdutoQuantidade> op = produtos.stream()
-                .filter(p -> p.getProduto().getCodigo().equals(produto.getCodigo())).findFirst();
-
-        if(op.isPresent()) {
-            ProdutoQuantidade produtoQuantidade = op.get();
-            produtoQuantidade.add(quantidade);
+        Optional<ProdutoQuantidade> op =
+                produtos.stream().filter(filter -> filter.getProduto().getCodigo().equals(produto.getCodigo())).findAny();
+        if (op.isPresent()) {
+            ProdutoQuantidade produtpQtd = op.get();
+            produtpQtd.add(quantidade);
+        } else {
+            ProdutoQuantidade prod =
+                    ProdutoQuantidade.builder()
+                            .produto(produto)
+                            .valorTotal(BigDecimal.ZERO)
+                            .quantidade(0)
+                            .build();
+            prod.add(quantidade);
+            produtos.add(prod);
         }
-        else {
-            ProdutoQuantidade produtoQuantidade =
-            ProdutoQuantidade.builder()
-                    .produto(produto)
-                    .quantidade(0)
-                    .valorTotal(BigDecimal.ZERO)
-                    .build();
+        recalcularValorTotalVenda();
+    }
 
-            produtos.add(produtoQuantidade);
-            produtoQuantidade.add(quantidade);
+    public void validarStatus() {
+        if (this.status == Status.CONCLUIDA || this.status == Status.CANCELADA) {
+            throw new UnsupportedOperationException("IMPOSSÍVEL ALTERAR VENDA FINALIZADA OU CANCELADA");
         }
-        recalcularValorTotal();
     }
 
     public void removerProduto(Produto produto, Integer quantidade) {
@@ -96,24 +99,17 @@ public class Venda {
         Optional<ProdutoQuantidade> op =
                 produtos.stream().filter(filter -> filter.getProduto().getCodigo().equals(produto.getCodigo())).findAny();
 
-        if(op.isPresent()) {
-            ProdutoQuantidade produtoQuantidade = op.get();
-            if(produtoQuantidade.getQuantidade() > quantidade) {
-                produtoQuantidade.remove(quantidade);
-                recalcularValorTotal();
+        if (op.isPresent()) {
+            ProdutoQuantidade produtpQtd = op.get();
+            if (produtpQtd.getQuantidade()>quantidade) {
+                produtpQtd.remove(quantidade);
+                recalcularValorTotalVenda();
             } else {
                 produtos.remove(op.get());
-                recalcularValorTotal();
+                recalcularValorTotalVenda();
             }
-        }
-    }
 
-    public void recalcularValorTotal(){
-        BigDecimal valorTotal = BigDecimal.ZERO;
-        for(ProdutoQuantidade produtoQuantidade : this.produtos){
-            valorTotal = valorTotal.add(produtoQuantidade.getValorTotal());
         }
-        this.valorTotal = valorTotal;
     }
 
     public void removerTodosProdutos() {
@@ -123,8 +119,19 @@ public class Venda {
     }
 
     public Integer getQuantidadeTotalProdutos() {
-        return produtos.stream()
+        // Soma a quantidade getQuantidade() de todos os objetos ProdutoQuantidade
+        int result = produtos.stream()
                 .reduce(0, (partialCountResult, prod) -> partialCountResult + prod.getQuantidade(), Integer::sum);
+        return result;
+    }
+
+    public void recalcularValorTotalVenda() {
+        //validarStatus();
+        BigDecimal valorTotal = BigDecimal.ZERO;
+        for (ProdutoQuantidade prod : this.produtos) {
+            valorTotal = valorTotal.add(prod.getValorTotal());
+        }
+        this.valorTotal = valorTotal;
     }
 
 }

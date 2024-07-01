@@ -17,4 +17,5 @@ public interface IProdutoRepository extends MongoRepository<Produto, String> {
 
     Page<Produto> findByStatus(Produto.Status status, Pageable pageable);
 
+    Page<Produto> findAllByStatus(Pageable pageable, Produto.Status status);
 }

@@ -15,56 +15,58 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/produto")
 public class ProdutoResources {
 
-    private CadastroProduto cadastroProduto;
     private BuscaProduto buscaProduto;
 
+    private CadastroProduto cadastroProduto;
+
     @Autowired
-    public ProdutoResources(CadastroProduto cadastroProduto, BuscaProduto buscaProduto) {
-        this.cadastroProduto = cadastroProduto;
+    public ProdutoResources(BuscaProduto buscaProduto,
+                            CadastroProduto cadastroProduto) {
         this.buscaProduto = buscaProduto;
+        this.cadastroProduto = cadastroProduto;
     }
 
     @GetMapping
-    @Operation(summary = "Busca todos os produtos cadastrados")
-    public ResponseEntity<Page<Produto>> buscarTodos(Pageable pageable) {
-        return ResponseEntity.ok(buscaProduto.buscarTodos(pageable));
-    }
-
-    @GetMapping(value = "/{id}")
-    @Operation(summary = "Busca um produto pelo seu identificador único")
-    public ResponseEntity<Produto> buscarPorId(String id) {
-        return ResponseEntity.ok(buscaProduto.buscarPorId(id));
+    @Operation(summary = "Busca uma lista paginada de produtos")
+    public ResponseEntity<Page<Produto>> buscar(Pageable pageable) {
+        return ResponseEntity.ok(buscaProduto.buscar(pageable));
     }
 
     @GetMapping(value = "/status/{status}")
-    @Operation(summary = "Busca produtos pelo status ativo ou inativo")
-    public ResponseEntity<Page<Produto>> buscarPorStatus(Produto.Status status, Pageable pageable) {
-        return ResponseEntity.ok(buscaProduto.buscarPorStatus(status, pageable));
+    @Operation(summary = "Busca uma lista paginada de produtos por status")
+    public ResponseEntity<Page<Produto>> buscarPorStatus(Pageable pageable,
+                                                         @PathVariable(value = "status", required = true) Produto.Status status) {
+        return ResponseEntity.ok(buscaProduto.buscar(pageable, status));
     }
 
-    @GetMapping(value = "/nome/{nome}")
-    @Operation(summary = "Busca produtos pelo nome")
-    public ResponseEntity<Page<Produto>> buscarPorNome(String nome, Pageable pageable) {
-        return ResponseEntity.ok(buscaProduto.buscarPorNome(nome, pageable));
+    @GetMapping(value = "/{codigo}")
+    @Operation(summary = "Busca um produto pelo codigo")
+    public ResponseEntity<Produto> buscarPorCodigo(String codigo) {
+        return ResponseEntity.ok(buscaProduto.buscarPorCodigo(codigo));
     }
 
     @PostMapping
-    @Operation(summary = "Cadastra o produto no banco de dados")
+    @Operation(summary = "Cadastra um produto")
     public ResponseEntity<Produto> cadastrar(@RequestBody @Valid Produto produto) {
         return ResponseEntity.ok(cadastroProduto.cadastrar(produto));
     }
 
     @PutMapping
-    @Operation(summary = "Atualiza as informações de um produto")
+    @Operation(summary = "Atualiza um produto")
     public ResponseEntity<Produto> atualizar(@RequestBody @Valid Produto produto) {
         return ResponseEntity.ok(cadastroProduto.atualizar(produto));
     }
 
     @DeleteMapping(value = "/{id}")
-    @Operation(summary = "Inativa um produto")
+    @Operation(summary = "Remove um produto pelo seu identificador único")
     public ResponseEntity<String> remover(@PathVariable(value = "id") String id) {
         cadastroProduto.remover(id);
-        return ResponseEntity.ok("Removido com sucesso!");
+        return ResponseEntity.ok("Removido com sucesso");
     }
 
+    @GetMapping("/nome/{nome}")
+    @Operation(summary = "Busca uma lista paginada de produtos pelo nome")
+    public ResponseEntity<Page<Produto>> buscarProdutoPeloNome(@PathVariable(name = "nome") String nome, Pageable pageable){
+        return ResponseEntity.ok(buscaProduto.buscarPeloNome(nome, pageable));
+    }
 }
