@@ -1,0 +1,2 @@
+INSERT INTO animal (name, age, breed, size, entry_date, adoption_date, entry_condition, receiver_name, death_date)
+VALUES ('Rex', 5, 'SRD', 'large' ,current_date, current_date, 'Broken legs', 'Hilary', current_date );
