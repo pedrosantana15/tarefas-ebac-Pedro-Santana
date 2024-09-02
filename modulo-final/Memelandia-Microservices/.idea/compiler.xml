@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="User" />
+        <module name="Category" />
+        <module name="Meme" />
+        <module name="DiscoveryService" />
+        <module name="Category (1)" />
+        <module name="Category (2)" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Category" options="-parameters" />
+      <module name="Category (1)" options="-parameters" />
+      <module name="Category (2)" options="-parameters" />
+      <module name="DiscoveryService" options="-parameters" />
+      <module name="Meme" options="-parameters" />
+      <module name="User" options="-parameters" />
+    </option>
+  </component>
+</project>
